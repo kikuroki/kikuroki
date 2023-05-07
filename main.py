@@ -13,14 +13,15 @@ with open('pas.txt','r') as f:
 
 
 class Data:
-
-    def __int__(self, cread_file='service.json'):
+    
+    def __init__(self, cread_file='service.json'):
         self.cread_file = cread_file
         self.gc = gspread.service_account(self.cread_file)
         self.database = self.gc.open("search")
         self.wks = self.database.worksheet(("Sheet1"))
         self.data = {}
-        Thread(target=self.get, args=(1,)).start()
+        self.get(1)
+        #Thread(target=self.get, args=(1,)).start()
 
     def reconect(self):
         self.gc = gspread.service_account(self.cread_file)
@@ -28,10 +29,13 @@ class Data:
         self.wks = self.database.worksheet(("Sheet1"))
 
     def get(self, init=0):
+        
         asd = pd.DataFrame(self.wks.get_all_values(), dtype=str).fillna('')
+        
         col = [i.lower().replace(' ', '') for i in asd.iloc[0].values.tolist()]
         asd.columns = col
         asd = asd.drop([0]).reset_index(drop=True)
+        
 
         dic = {}
 
@@ -92,7 +96,7 @@ class Data:
             dic[lis_truck[lis1[i - 1]]] = {'param': dic_, 'text': asd.iloc()[0]['text']}
         if init:
             self.dic = dic
-
+        
         return dic
 
     def update(self, locks: dict):
@@ -100,7 +104,7 @@ class Data:
         #
         for k in self.dic.keys():
             if (k in new_dic.keys()) ==0:
-                #kill
+                
                 pass
 
         for k,v in new_dic.items():
@@ -116,8 +120,10 @@ class Data:
                     self.dic[k]['text']=v['text']
                     #event? no
 
+a=Data()
 
-
+print(a.dic)
+exit()
 
 
 
@@ -158,6 +164,7 @@ def freight_search(param={}):
 
     def searching_id(param={}):
         def main_text(params={}):
+            #params= {'date_earliest': '4.05', 'date_latest': '', 'unloading': {}, 'loading': {'FR': ['22', '22+40'], 'ES': []}}
             b = """
 
                                   <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:v2="http://webservice.timocom.com/schema/connect/v2">
@@ -180,34 +187,85 @@ def freight_search(param={}):
                      <v2:firstResult>{start}</v2:firstResult>
                        <v2:maxResults>30</v2:maxResults>
                        <v2:date>
-                       <v2:dateInterval> 
-                       <v2:start>2023-05-03</v2:start>
-                       <v2:end>2023-05-10</v2:end>
+                       <v2:dateInterval>"""
+            b+=f""" 
+                       <v2:start>{params['date_earliest']}</v2:start>
+                       <v2:end>{params['date_latest']}</v2:end>
                        </v2:dateInterval>
-                       </v2:date>
+                       </v2:date>"""
+            if params['loading']!={}:
+                b+="""
                        <v2:startLocation>
-                   <v2:countrySearch>
+                   <v2:countrySearch>"""
+                for k,v in params['loading'].items():
+
+                    b+=f"""
+                       
                    <v2:searchLine>
-                   <v2:country>FR</v2:country>
+                   <v2:country>{k}</v2:country>
+                   """
+                    if v!=[]:
+                        b+="""<v2:postalCodes>"""
+                        for i in v:
+                            b+=f"""<v2:postalCode>{i}</v2:postalCode>"""
+                        b+="""</v2:postalCodes>"""
+                    b+="""
     
     
                    </v2:searchLine>
     
-                   </v2:countrySearch>
-                   </v2:startLocation>
-                  <v2:destinationLocation>
-                 <v2:countrySearch>
-                 <v2:searchLine>
-                   <v2:country>DE</v2:country>
-                  </v2:searchLine>
-    
-                   </v2:countrySearch>
-    
-                   </v2:destinationLocation>
-                       </v2:payload>
-                     </v2:FindCargoOffersRequest>
-                     </soap:Body>
-                     </soap:Envelope>"""
+                   """
+                b+="""</v2:countrySearch>"""
+                b+="""</v2:startLocation>
+                """
+            if params['unloading']!={}:
+                b+="""
+                    <v2:destinationLocation>
+                <v2:countrySearch>"""
+                for k,v in params['unloading'].items():
+
+                    b+=f"""
+                    
+                <v2:searchLine>
+                <v2:country>{k}</v2:country>
+                """
+                    if v!=[]:
+                        b+="""<v2:postalCodes>"""
+                        for i in v:
+                            b+=f"""<v2:postalCode>{i}</v2:postalCode>"""
+                        b+="""</v2:postalCodes>"""
+                    b+="""
+
+
+                </v2:searchLine>
+
+                """
+                b+="""</v2:countrySearch>"""
+                b+="""</v2:destinationLocation>
+                """
+            b+="<v2:vehicleProperties>"
+            b+="""<v2:property>
+            <v2:category>VEHICLE_BODY</v2:category>"""
+            b+="""<v2:values>
+<v2:value>TAUTLINER</v2:value>
+<v2:value>CURTAIN_SIDER</v2:value>
+</v2:values>
+"""
+            b+="</v2:property>"
+            b+="""<v2:property>
+            <v2:category>VEHICLE_TYPE</v2:category>"""
+            b+="""<v2:values>
+<v2:value>TRAILER</v2:value>
+</v2:values>
+"""
+            b+="</v2:property>"
+            b+="</v2:vehicleProperties>"
+            b+="""
+
+                    </v2:payload>
+                    </v2:FindCargoOffersRequest>
+                    </soap:Body>
+                    </soap:Envelope>"""
             return b
 
         def send_request(idd=0, creat_time=str(Creatbase()), querry=str(time_now())):
