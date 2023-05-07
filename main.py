@@ -8,122 +8,13 @@ import unidecode
 import xmltodict
 from datetime import datetime, timedelta
 from threading import Thread, Lock
+import pyperclip
 with open('pas.txt','r') as f:
     pas=f.read()
 
 
-class Data:
-    
-    def __init__(self, cread_file='service.json'):
-        self.cread_file = cread_file
-        self.gc = gspread.service_account(self.cread_file)
-        self.database = self.gc.open("search")
-        self.wks = self.database.worksheet(("Sheet1"))
-        self.data = {}
-        self.get(1)
-        #Thread(target=self.get, args=(1,)).start()
 
-    def reconect(self):
-        self.gc = gspread.service_account(self.cread_file)
-        self.database = self.gc.open("search")
-        self.wks = self.database.worksheet(("Sheet1"))
 
-    def get(self, init=0):
-        
-        asd = pd.DataFrame(self.wks.get_all_values(), dtype=str).fillna('')
-        
-        col = [i.lower().replace(' ', '') for i in asd.iloc[0].values.tolist()]
-        asd.columns = col
-        asd = asd.drop([0]).reset_index(drop=True)
-        
-
-        dic = {}
-
-        lis_truck = asd['truck'].tolist()
-        for i in range(len(lis_truck)):
-
-            if lis_truck[i] != '' and lis_truck[i] in lis_truck[i + 1:]:
-                lis_truck[i] = lis_truck[i] + '_]'
-        lis1 = []
-        for i in range(len(lis_truck)):
-            if len(lis_truck[i]) > 0:
-                lis1.append(i)
-        lis1.append(len(lis_truck))
-
-        typ_loa = [i.upper().replace(' ', '').replace('KM', '') for i in asd['type_loa'].tolist()]
-        typ_un = [i.upper().replace(' ', '').replace('KM', '') for i in asd['type_un'].tolist()]
-        for i in range(1, len(lis1)):
-            dic_ = {}
-            dic_loading = {}
-            dic_unloading = {}
-
-            dic_['date_earliest'] = asd.iloc()[lis1[i - 1]]['date_earliest']
-            dic_['date_latest'] = asd.iloc()[lis1[i - 1]]['date_latest']
-            lis_loading = [i.upper().replace(' ', '') for i in asd['loading'].tolist()]
-            lis_unloading = [i.upper().replace(' ', '') for i in asd['unloading'].tolist()]
-            lis_loading1 = []
-            lis_unloading1 = []
-            for y in range(lis1[i - 1], lis1[i]):
-                if lis_loading[y] != '':
-                    lis_loading1.append(y)
-                if lis_unloading[y] != '':
-                    lis_unloading1.append(y)
-            lis_loading1.append(lis1[i])
-            lis_unloading1.append(lis1[i])
-            for y in range(1, len(lis_loading1)):
-                lis = []
-                for w in range(lis_loading1[y - 1], lis_loading1[y]):
-                    if typ_loa[w] != '':
-                        lis.append(typ_loa[w])
-                if lis_loading[lis_loading1[y - 1]] in dic_loading:
-
-                    dic_loading[lis_loading[lis_loading1[y - 1]]].extend(lis)
-                else:
-                    dic_loading[lis_loading[lis_loading1[y - 1]]] = lis
-            for y in range(1, len(lis_unloading1)):
-                lis = []
-                for w in range(lis_unloading1[y - 1], lis_unloading1[y]):
-                    if typ_un[w] != '':
-                        lis.append(typ_un[w])
-                if lis_unloading[lis_unloading1[y - 1]] in dic_unloading:
-
-                    dic_unloading[lis_unloading[lis_unloading1[y - 1]]].extend(lis)
-                else:
-                    dic_unloading[lis_unloading[lis_unloading1[y - 1]]] = lis
-
-            dic_['unloading'] = dic_unloading
-            dic_['loading'] = dic_loading
-            dic[lis_truck[lis1[i - 1]]] = {'param': dic_, 'text': asd.iloc()[0]['text']}
-        if init:
-            self.dic = dic
-        
-        return dic
-
-    def update(self, locks: dict):
-        new_dic = self.get()
-        #
-        for k in self.dic.keys():
-            if (k in new_dic.keys()) ==0:
-                
-                pass
-
-        for k,v in new_dic.items():
-            if (k in self.dic) ==0:
-                #start new add to del list
-                pass
-            else:
-                if v['param'] !=self.dic[k]['param']:
-                    #kill
-                    #start new add to del list
-                    pass
-                elif v['text'] !=self.dic[k]['text']:
-                    self.dic[k]['text']=v['text']
-                    #event? no
-
-a=Data()
-
-print(a.dic)
-exit()
 
 
 
@@ -139,11 +30,15 @@ class Creatbase:
     def __str__(self):
         if datetime.isoweekday(datetime.now()) == 1:
             return (datetime.now() - timedelta(days=3)).isoformat()[:-3] + 'Z'
+        if datetime.isoweekday(datetime.now()) == 6:
+            return (datetime.now() - timedelta(days=2)).isoformat()[:-3] + 'Z'
+        if datetime.isoweekday(datetime.now()) == 7:
+            return (datetime.now() - timedelta(days=3)).isoformat()[:-3] + 'Z'
 
         return (datetime.now() - timedelta(days=1)).isoformat()[:-3] + 'Z'
 
 
-def freight_search(param={}):
+def freight_search():
     pull_id = []
     lock_list = Lock()
     lock_for_mail = Lock()
@@ -162,7 +57,7 @@ def freight_search(param={}):
     #        send_mail(dir)
     #        # creat picking not succsesfull shot Thread
 
-    def searching_id(param={}):
+    def searching_id(even : threading.Event, param={}):
         def main_text(params={}):
             #params= {'date_earliest': '4.05', 'date_latest': '', 'unloading': {}, 'loading': {'FR': ['22', '22+40'], 'ES': []}}
             b = """
@@ -267,21 +162,34 @@ def freight_search(param={}):
                     </soap:Body>
                     </soap:Envelope>"""
             return b
-
+        
         def send_request(idd=0, creat_time=str(Creatbase()), querry=str(time_now())):
 
-            # if kill then break
-
+            if even.is_set():
+                print(threading.current_thread().name)
+                exit()
+            
             url = r"https://webservice.timocom.com/tcconnect/ws_v2/soap1_2"
             qwe = requests.post(url, text_req.format(creat=creat_time, query=querry, start=idd * 30))
             dir = (xmltodict.parse(qwe.text))
+            
+            try:
+                if isinstance(dir['env:Envelope']['env:Body']['ns2:FindCargoOffersResponse']['ns2:payload'][
+                           'ns2:entity'], list)==0:
+                    dir['env:Envelope']['env:Body']['ns2:FindCargoOffersResponse']['ns2:payload'][
+                           'ns2:entity']=[dir['env:Envelope']['env:Body']['ns2:FindCargoOffersResponse']['ns2:payload'][
+                           'ns2:entity']]
+            except Exception as e:
+                pass
+                
+            
             try:
 
                 if len(dir['env:Envelope']['env:Body']['ns2:FindCargoOffersResponse']['ns2:payload'][
                            'ns2:entity']) == 30 and idd % 3 == 0 and idd > 0:
                     for i in range(1, 4):
                         Thread(target=send_request, args=(idd + i, creat_time, querry),
-                               name=threading.currentThread().getName()).start()
+                               name=threading.current_thread().name).start()
             except Exception as e:
                 # print(e)
                 pass
@@ -293,13 +201,18 @@ def freight_search(param={}):
                             "ns2:creationDateTime"]
                 except:
                     creat_time_ = creat_time
-
-                Thread(target=send_request, args=(0, creat_time_,), name=threading.currentThread().getName()).start()
-
+                try:
+                    Thread(target=send_request, args=(0, creat_time_,), name=threading.current_thread().name).start()
+                except Exception as e:
+                    pass
             list_get = []
+            
             try:
                 for i in dir['env:Envelope']['env:Body']['ns2:FindCargoOffersResponse']['ns2:payload']['ns2:entity']:
                     public_id = i["ns2:publicId"]
+                    if i['ns2:vehicleProperties']['ns2:property'][4]['ns2:values']!=None and 'ns2:value' in  i['ns2:vehicleProperties']['ns2:property'][4]['ns2:values'] :
+                            if 'ADR_EQUIPMENT_SET' in  i['ns2:vehicleProperties']['ns2:property'][4]['ns2:values']['ns2:value']:
+                                    continue
                     # loading = i['ns2:loadingPlaces']['ns2:loadingPlace'][0]['ns2:address']["ns2:country"] + \
                     #          i['ns2:loadingPlaces']['ns2:loadingPlace'][0]['ns2:address']["ns2:postalCode"]
                     # date_1 = i['ns2:loadingPlaces']['ns2:loadingPlace'][0]["ns2:earliestLoadingDate"]
@@ -322,7 +235,7 @@ def freight_search(param={}):
                     # print(xmltodict.parse(timmo_get(id)))
 
 
-            except:
+            except Exception as e:
                 pass
                 # return 0, creat, diq
             # return creat, diq
@@ -339,7 +252,7 @@ def freight_search(param={}):
                     lock.acquire()
 
         def timmo_get(public_id_list):
-
+            
             def parsing(text: dict):
                 def change(dir):
 
@@ -434,36 +347,79 @@ def freight_search(param={}):
             qwe = requests.post(url, payload2_get.encode("UTF-8"), headers={
                 'content-type': 'application/soap+xml; charset=UTF-8'
             })
+            qwe=parsing(qwe.text)
 
             with lock_for_mail:
 
-                for i in parsing(qwe.text):
+                for i in qwe:
                     if i in list_mail:
                         pass
                     else:
                         list_mail.append(i)
-                        Thread(target=send_mail, name=threading.currentThread().getName(), args=(i,)).start()
+                        Thread(target=send_mail, name=threading.current_thread().name, args=(i,)).start()
 
         def send_mail(info):
             print(unidecode.unidecode(str(info)))
-
+        
         text_req = main_text(param)
         for i in range(3):
-            Thread(target=send_request, name=threading.currentThread().getName(), args=(i,)).start()
+            Thread(target=send_request, name=threading.current_thread().name, args=(i,)).start()
 
     # get_sheets and get_car_by_car:
-    dd = {'wgm': {'param': {}}, 'wgm2': {'param': {}}}
+    from Data import Data
+    
     event = {}
-    for i in dd:
-        e = threading.Event()
-        # for y in dd[i]:
-        Thread(target=searching_id, args=(dd[i]['param'], e,), name=i)
-        event[i] = e
+    dd=Data()
+    
 
+    for i in dd.dic:
+        event[i] = threading.Event()
+        # for y in dd[i]:
+        Thread(target=searching_id, args=(event[i], dd.dic[i]['param'].copy(),  ), name=i).start()
+    def update():
+        new_dic = dd.get()
+        if new_dic=={}:
+            for k in dd.dic.keys():
+                event[k].set()
+            dd.dic={}
+            return
+            #
+        for k in dd.dic.keys():
+            if (k in new_dic.keys()) ==0:
+                event[k].set()
+                del dd.dic[k]
+                
+
+        for k,v in new_dic.items():
+            if (k in dd.dic) ==0:
+                dd.dic[k]=v
+                event[k]=threading.Event()
+                Thread(target=searching_id, args=(event[k],v['param'].copy(),), name=k).start()
+
+                
+            else:
+                if v['param'] !=dd.dic[k]['param']:
+                    event[k].set()
+                    del event[k]
+                    event[k]=threading.Event()
+                    Thread(target=searching_id, args=(event[k], v['param'].copy(),), name=k).start()
+                    dd.dic[k]['param']=v['param']
+                elif v['text'] !=dd.dic[k]['text']:
+                    dd.dic[k]['text']=v['text']
+    import time
+    print('ok')
+    while True:
+        time.sleep(5)
+        update()
+
+    
+    
+    
     # receive update wgm - change
-    dd['wgm'] = new_param
-    event['wgm'].set()
-    e = threading.Event()
-    for y in dd['wgm']:
-        Thread(target=searching_id, args=(dd['wgm'][y], e,), name='wgm')
-    event['wgm'] = e
+    #dd['wgm'] = new_param
+    #event['wgm'].set()
+    #e = threading.Event()
+    #for y in dd['wgm']:
+    #    Thread(target=searching_id, args=(dd['wgm'][y], e,), name='wgm')
+    #event['wgm'] = e
+freight_search()
