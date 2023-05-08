@@ -11,6 +11,8 @@ from threading import Thread, Lock
 import pyperclip
 with open('pas.txt','r') as f:
     pas=f.read()
+with open('js.json','r') as f:
+    info=json.load(f)
 
 
 
@@ -38,11 +40,13 @@ class Creatbase:
         return (datetime.now() - timedelta(days=1)).isoformat()[:-3] + 'Z'
 
 
-def freight_search():
+def freight_search(info:dict):
+    
     pull_id = []
     lock_list = Lock()
     lock_for_mail = Lock()
     list_mail = []
+    
 
     # def send_mail(dir):
     #    global list_today
@@ -277,6 +281,7 @@ def freight_search():
                         return dir
 
                 text = xmltodict.parse(text)
+                
                 try:
                     text = text['env:Envelope']['env:Body']['ns2:LookupCargoOffersResponse']['ns2:payload'][
                         'ns2:entity']
@@ -284,10 +289,8 @@ def freight_search():
                     return []
                 if isinstance(text, list) == 0:
                     text = [text]
-                lis_del = {'del': ["ns2:publicId", "ns2:creationDateTime", 'ns2:trackable', 'ns2:contactChannels',
-                                   'ns2:vehicleProperties', 'ns2:deepLink', 'ns2:logisticsDocumentTypes',
-                                   'ns2:otherBodyPossible', 'ns2:additionalInformationList',
-                                   'ns2:acceptPriceProposals']}
+                lis_del = {'del': ["ns2:publicId", "ns2:creationDateTime", 'ns2:trackable', 'ns2:contactChannels', 'ns2:deepLink', 'ns2:logisticsDocumentTypes', 'ns2:additionalInformationList',
+                                   'ns2:otherBodyPossible','ns2:acceptPriceProposals']}
                 for i in range(len(text)):
                     try:
                         del text[i]['ns2:customer']['@xsi:type']
@@ -347,7 +350,9 @@ def freight_search():
             qwe = requests.post(url, payload2_get.encode("UTF-8"), headers={
                 'content-type': 'application/soap+xml; charset=UTF-8'
             })
+            pyperclip.copy(qwe.text)
             qwe=parsing(qwe.text)
+
 
             with lock_for_mail:
 
@@ -358,8 +363,86 @@ def freight_search():
                         list_mail.append(i)
                         Thread(target=send_mail, name=threading.current_thread().name, args=(i,)).start()
 
-        def send_mail(info):
-            print(unidecode.unidecode(str(info)))
+        def send_mail(param):
+            mail=info['mail']
+            name=info['name']
+            add_text=dd.dic[threading.current_thread().name]['text']
+            customer=param['customer']
+            contact_person=param['contactPerson']
+            if 'lastName' in contact_person ==0:
+                contact_person['lastName']=''
+            if 'firstName' in contact_person ==0:
+                contact_person['firstName']=''
+            text=f"""
+TIMOCOM ID: NASHA
+
+Company: NASHA
+
+Contact person: NASHA
+
+Phone: NASHA
+
+ 
+
+Provider: {customer['publicId']}, {customer['name']}, {contact_person['firstName']} {contact_person['lastName']}
+
+Phone number: {contact_person['phone']}
+
+Tax: {customer['taxId']}
+
+
+Load to be offered:
+
+    On: 05.05.2023
+
+    Town: DE, 56068 Koblenz
+
+ 
+
+Unloading:
+
+Town: DE, 15230 Frankfurt (Oder)
+
+ 
+
+Distance in km: {param['distanceInKilometres']}
+
+     
+
+
+Length: {param['lengthInMetres']} m
+
+Weight/to: {param['weightInTons']} to
+
+Loading places: 1
+
+Unloading places: 1
+
+
+ 
+
+Required type of vehicle: Articulated truck
+
+    Type of body: Tautliner, Curtain
+"""
+            try:
+                text+=f"""
+Price: {param['price']}
+"""
+            except:
+                pass
+            try:
+                text+=f"""
+Remark:
+
+{param['publicRemark']}
+"""
+            except:
+                pass
+            print(text)
+
+            #print(add_text)
+            #print(unidecode.unidecode(str(param)))
         
         text_req = main_text(param)
         for i in range(3):
@@ -369,7 +452,7 @@ def freight_search():
     from Data import Data
     
     event = {}
-    dd=Data()
+    dd=Data(cread_file=info['cread_file'])
     
 
     for i in dd.dic:
@@ -422,4 +505,7 @@ def freight_search():
     #for y in dd['wgm']:
     #    Thread(target=searching_id, args=(dd['wgm'][y], e,), name='wgm')
     #event['wgm'] = e
-freight_search()
+
+for i in info:
+    
+    Thread(target=freight_search,args=(info[i],),name=i).start()
