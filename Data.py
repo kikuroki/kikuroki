@@ -8,7 +8,7 @@ import unidecode
 import xmltodict
 from datetime import datetime, timedelta
 from threading import Thread, Lock
-import pyperclip
+#import pyperclip
 class Data:
     
     def __init__(self, cread_file='service.json'):

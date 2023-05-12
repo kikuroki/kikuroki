@@ -8,45 +8,57 @@ import unidecode
 import xmltodict
 from datetime import datetime, timedelta
 from threading import Thread, Lock
-import pyperclip
-with open('pas.txt','r') as f:
-    pas=f.read()
-with open('js.json','r') as f:
-    info=json.load(f)
+from mail_function import mail_function
+
+# import pyperclip
+with open('pas.txt', 'r') as f:
+    pas = f.read()
+with open('js.json', 'r') as f:
+    info = json.load(f)
+try:
+    with open('list_mail.json', 'r') as f:
+        public_dict = json.load(f)
+except Exception as e:
+    public_dict={}
+try:
+    with open('block_list.json', 'r') as f:
+        di = json.load(f)
+    block_list_country = di["country"]
+    block_list = di["id"]
+except:
+    block_list_country = []
+    block_list = []
+
+publick_dic_lock = Lock()
 
 
+def time_now():
+    return (datetime.now() - timedelta(minutes=60*2)).isoformat()[:-3] + 'Z'
 
 
+def Creatbase():
+    # if datetime.isoweekday(datetime.now()) == 1:
+    #    return (datetime.now() - timedelta(days=3)).isoformat()[:-3] + 'Z'
+    # if datetime.isoweekday(datetime.now()) == 6:
+    #    return (datetime.now() - timedelta(days=2)).isoformat()[:-3] + 'Z'
+    # if datetime.isoweekday(datetime.now()) == 7:
+    #    return (datetime.now() - timedelta(days=3)).isoformat()[:-3] + 'Z'
+    #
+    return (datetime.now() - timedelta(minutes=60*24*2)).isoformat()[:-3] + 'Z'
 
 
-
-
-
-
-class time_now:
-    def __str__(self):
-        return datetime.now().isoformat()[:-3] + 'Z'
-
-
-class Creatbase:
-    def __str__(self):
-        if datetime.isoweekday(datetime.now()) == 1:
-            return (datetime.now() - timedelta(days=3)).isoformat()[:-3] + 'Z'
-        if datetime.isoweekday(datetime.now()) == 6:
-            return (datetime.now() - timedelta(days=2)).isoformat()[:-3] + 'Z'
-        if datetime.isoweekday(datetime.now()) == 7:
-            return (datetime.now() - timedelta(days=3)).isoformat()[:-3] + 'Z'
-
-        return (datetime.now() - timedelta(days=1)).isoformat()[:-3] + 'Z'
-
-
-def freight_search(info:dict):
-    
+def freight_search(info: dict):
+    lock_imap = Lock()
+    lock_smtp = Lock()
     pull_id = []
     lock_list = Lock()
     lock_for_mail = Lock()
-    list_mail = []
-    
+
+    try:
+        list_mail = public_dict[threading.current_thread().name]
+
+    except:
+        list_mail = []
 
     # def send_mail(dir):
     #    global list_today
@@ -61,9 +73,9 @@ def freight_search(info:dict):
     #        send_mail(dir)
     #        # creat picking not succsesfull shot Thread
 
-    def searching_id(even : threading.Event, param={}):
+    def searching_id(even: threading.Event, param={}):
         def main_text(params={}):
-            #params= {'date_earliest': '4.05', 'date_latest': '', 'unloading': {}, 'loading': {'FR': ['22', '22+40'], 'ES': []}}
+            # params= {'date_earliest': '4.05', 'date_latest': '', 'unloading': {}, 'loading': {'FR': ['22', '22+40'], 'ES': []}}
             b = """
 
                                   <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:v2="http://webservice.timocom.com/schema/connect/v2">
@@ -87,106 +99,160 @@ def freight_search(info:dict):
                        <v2:maxResults>30</v2:maxResults>
                        <v2:date>
                        <v2:dateInterval>"""
-            b+=f""" 
+            b += f""" 
                        <v2:start>{params['date_earliest']}</v2:start>
                        <v2:end>{params['date_latest']}</v2:end>
                        </v2:dateInterval>
                        </v2:date>"""
-            if params['loading']!={}:
-                b+="""
-                       <v2:startLocation>
-                   <v2:countrySearch>"""
-                for k,v in params['loading'].items():
+            t = 1
+            for i in params['loading']:
+                for y in params['loading'][i]:
+                    if "+" in y:
+                        t = 0
+            if t == 0:
+                for i in params['loading']:
+                    for y in params['loading'][i]:
+                        area = y.split("+")
+                        if len(area) != 2:
+                            t = 1
+                            continue
 
-                    b+=f"""
-                       
-                   <v2:searchLine>
-                   <v2:country>{k}</v2:country>
-                   """
-                    if v!=[]:
-                        b+="""<v2:postalCodes>"""
-                        for i in v:
-                            b+=f"""<v2:postalCode>{i}</v2:postalCode>"""
-                        b+="""</v2:postalCodes>"""
-                    b+="""
+                    b += f"""<v2:startLocation>
+
+                <v2:areaSearch> 
+                <v2:country>{i}</v2:country>
+                <v2:postalCode>{area[0]}</v2:postalCode>
+
+                <v2:areaInKilometres>{area[1]}</v2:areaInKilometres>
+                </v2:areaSearch>
+                </v2:startLocation>
+                """
+                    t = 0
+                    break
+
+            elif t == 1:
+                if params['loading'] != {}:
+                    b += """
+                           <v2:startLocation>
+                       <v2:countrySearch>"""
+                    for k, v in params['loading'].items():
+
+                        b += f"""
+
+                       <v2:searchLine>
+                       <v2:country>{k}</v2:country>
+                       """
+                        if v != []:
+                            b += """<v2:postalCodes>"""
+                            for i in v:
+                                b += f"""<v2:postalCode>{i}</v2:postalCode>"""
+                            b += """</v2:postalCodes>"""
+                        b += """
+
+
+                       </v2:searchLine>
+
+                       """
+                    b += """</v2:countrySearch>"""
+                    b += """</v2:startLocation>
+                    """
+            t = 1
+            for i in params['unloading']:
+                for y in params['unloading'][i]:
+                    if "+" in y:
+                        t = 0
+            if t == 0:
+                for i in params['unloading']:
+                    for y in params['unloading'][i]:
+                        area = y.split("+")
+                        if len(area) != 2:
+                            t = 1
+                            continue
+
+                    b += f"""<v2:startLocation>
+
+                            <v2:areaSearch> 
+                            <v2:country>{i}</v2:country>
+                            <v2:postalCode>{area[0]}</v2:postalCode>
+
+                            <v2:areaInKilometres>{area[1]}</v2:areaInKilometres>
+                            </v2:areaSearch>
+                            </v2:startLocation>
+                            """
+                    t = 0
+                    break
+            elif t == 1:
+                if params['unloading'] != {}:
+                    b += """
+                        <v2:destinationLocation>
+                    <v2:countrySearch>"""
+                    for k, v in params['unloading'].items():
+
+                        b += f"""
+                        
+                    <v2:searchLine>
+                    <v2:country>{k}</v2:country>
+                    """
+                        if v != []:
+                            b += """<v2:postalCodes>"""
+                            for i in v:
+                                b += f"""<v2:postalCode>{i}</v2:postalCode>"""
+                            b += """</v2:postalCodes>"""
+                        b += """
     
     
-                   </v2:searchLine>
+                    </v2:searchLine>
     
-                   """
-                b+="""</v2:countrySearch>"""
-                b+="""</v2:startLocation>
-                """
-            if params['unloading']!={}:
-                b+="""
-                    <v2:destinationLocation>
-                <v2:countrySearch>"""
-                for k,v in params['unloading'].items():
-
-                    b+=f"""
-                    
-                <v2:searchLine>
-                <v2:country>{k}</v2:country>
-                """
-                    if v!=[]:
-                        b+="""<v2:postalCodes>"""
-                        for i in v:
-                            b+=f"""<v2:postalCode>{i}</v2:postalCode>"""
-                        b+="""</v2:postalCodes>"""
-                    b+="""
-
-
-                </v2:searchLine>
-
-                """
-                b+="""</v2:countrySearch>"""
-                b+="""</v2:destinationLocation>
-                """
-            b+="<v2:vehicleProperties>"
-            b+="""<v2:property>
+                    """
+                    b += """</v2:countrySearch>"""
+                    b += """</v2:destinationLocation>
+                    """
+            b += "<v2:vehicleProperties>"
+            b += """<v2:property>
             <v2:category>VEHICLE_BODY</v2:category>"""
-            b+="""<v2:values>
+            b += """<v2:values>
 <v2:value>TAUTLINER</v2:value>
 <v2:value>CURTAIN_SIDER</v2:value>
 </v2:values>
 """
-            b+="</v2:property>"
-            b+="""<v2:property>
+            b += "</v2:property>"
+            b += """<v2:property>
             <v2:category>VEHICLE_TYPE</v2:category>"""
-            b+="""<v2:values>
+            b += """<v2:values>
 <v2:value>TRAILER</v2:value>
 </v2:values>
 """
-            b+="</v2:property>"
-            b+="</v2:vehicleProperties>"
-            b+="""
+            b += "</v2:property>"
+            b += "</v2:vehicleProperties>"
+            b += """
 
                     </v2:payload>
                     </v2:FindCargoOffersRequest>
                     </soap:Body>
                     </soap:Envelope>"""
+
+            # exit()
             return b
-        
-        def send_request(idd=0, creat_time=str(Creatbase()), querry=str(time_now())):
+
+        def send_request(idd=0, creat_time=Creatbase(), querry=time_now()):
 
             if even.is_set():
-                print(threading.current_thread().name)
+                # (threading.current_thread().name)
                 exit()
-            
+
             url = r"https://webservice.timocom.com/tcconnect/ws_v2/soap1_2"
             qwe = requests.post(url, text_req.format(creat=creat_time, query=querry, start=idd * 30))
             dir = (xmltodict.parse(qwe.text))
-            
+
             try:
                 if isinstance(dir['env:Envelope']['env:Body']['ns2:FindCargoOffersResponse']['ns2:payload'][
-                           'ns2:entity'], list)==0:
+                                  'ns2:entity'], list) == 0:
                     dir['env:Envelope']['env:Body']['ns2:FindCargoOffersResponse']['ns2:payload'][
-                           'ns2:entity']=[dir['env:Envelope']['env:Body']['ns2:FindCargoOffersResponse']['ns2:payload'][
-                           'ns2:entity']]
+                        'ns2:entity'] = [dir['env:Envelope']['env:Body']['ns2:FindCargoOffersResponse']['ns2:payload'][
+                                             'ns2:entity']]
             except Exception as e:
                 pass
-                
-            
+
             try:
 
                 if len(dir['env:Envelope']['env:Body']['ns2:FindCargoOffersResponse']['ns2:payload'][
@@ -210,13 +276,29 @@ def freight_search(info:dict):
                 except Exception as e:
                     pass
             list_get = []
-            
+
             try:
                 for i in dir['env:Envelope']['env:Body']['ns2:FindCargoOffersResponse']['ns2:payload']['ns2:entity']:
                     public_id = i["ns2:publicId"]
-                    if i['ns2:vehicleProperties']['ns2:property'][4]['ns2:values']!=None and 'ns2:value' in  i['ns2:vehicleProperties']['ns2:property'][4]['ns2:values'] :
-                            if 'ADR_EQUIPMENT_SET' in  i['ns2:vehicleProperties']['ns2:property'][4]['ns2:values']['ns2:value']:
-                                    continue
+
+
+                    try:
+                        if i['ns2:vehicleProperties']['ns2:property'][4]['ns2:values'] != None and 'ns2:value' in \
+                                i['ns2:vehicleProperties']['ns2:property'][4]['ns2:values']:
+                            if 'ADR_EQUIPMENT_SET' in i['ns2:vehicleProperties']['ns2:property'][4]['ns2:values'][
+                                'ns2:value']:
+                                continue
+                    except Exception as e:
+                        pass
+
+
+                    try:
+                        if float(i['ns2:lengthInMetres']) < 12:
+                            continue
+                    except:
+                        pass
+
+
                     # loading = i['ns2:loadingPlaces']['ns2:loadingPlace'][0]['ns2:address']["ns2:country"] + \
                     #          i['ns2:loadingPlaces']['ns2:loadingPlace'][0]['ns2:address']["ns2:postalCode"]
                     # date_1 = i['ns2:loadingPlaces']['ns2:loadingPlace'][0]["ns2:earliestLoadingDate"]
@@ -239,10 +321,12 @@ def freight_search(info:dict):
                     # print(xmltodict.parse(timmo_get(id)))
 
 
+
             except Exception as e:
                 pass
                 # return 0, creat, diq
             # return creat, diq
+
             if list_get != []:
                 timmo_get(list_get)
 
@@ -256,7 +340,7 @@ def freight_search(info:dict):
                     lock.acquire()
 
         def timmo_get(public_id_list):
-            
+
             def parsing(text: dict):
                 def change(dir):
 
@@ -281,7 +365,7 @@ def freight_search(info:dict):
                         return dir
 
                 text = xmltodict.parse(text)
-                
+
                 try:
                     text = text['env:Envelope']['env:Body']['ns2:LookupCargoOffersResponse']['ns2:payload'][
                         'ns2:entity']
@@ -289,8 +373,9 @@ def freight_search(info:dict):
                     return []
                 if isinstance(text, list) == 0:
                     text = [text]
-                lis_del = {'del': ["ns2:publicId", "ns2:creationDateTime", 'ns2:trackable', 'ns2:contactChannels', 'ns2:deepLink', 'ns2:logisticsDocumentTypes', 'ns2:additionalInformationList',
-                                   'ns2:otherBodyPossible','ns2:acceptPriceProposals']}
+                lis_del = {'del': ["ns2:publicId", "ns2:creationDateTime", 'ns2:trackable', 'ns2:contactChannels',
+                                   'ns2:deepLink', 'ns2:logisticsDocumentTypes', 'ns2:additionalInformationList',
+                                   'ns2:otherBodyPossible', 'ns2:acceptPriceProposals']}
                 for i in range(len(text)):
                     try:
                         del text[i]['ns2:customer']['@xsi:type']
@@ -350,13 +435,21 @@ def freight_search(info:dict):
             qwe = requests.post(url, payload2_get.encode("UTF-8"), headers={
                 'content-type': 'application/soap+xml; charset=UTF-8'
             })
-            pyperclip.copy(qwe.text)
-            qwe=parsing(qwe.text)
+            # pyperclip.copy(qwe.text)
+            qwe = parsing(qwe.text)
 
-
-            with lock_for_mail:
-
-                for i in qwe:
+            for i in qwe:
+                try:
+                    if int(i['publicId']) in block_list:
+                        continue
+                except:
+                    pass
+                try:
+                    if i['companyAddress']['country'] in block_list_country:
+                        continue
+                except:
+                    pass
+                with lock_for_mail:
                     if i in list_mail:
                         pass
                     else:
@@ -364,148 +457,322 @@ def freight_search(info:dict):
                         Thread(target=send_mail, name=threading.current_thread().name, args=(i,)).start()
 
         def send_mail(param):
-            mail=info['mail']
-            name=info['name']
-            add_text=dd.dic[threading.current_thread().name]['text']
-            customer=param['customer']
-            contact_person=param['contactPerson']
-            if 'lastName' in contact_person ==0:
-                contact_person['lastName']=''
-            if 'firstName' in contact_person ==0:
-                contact_person['firstName']=''
-            text=f"""
-TIMOCOM ID: NASHA
+            def parsing_for_mail():
+                topik = "TIMOCOM-OFFER: "
+                customer = param['customer']
+                contact_person = param['contactPerson']
+                text = f"TIMOCOM ID: 21296\n\nCompany: Coltrans sp. z.o.o.\n\nContact person: {info['name']}\n\n"
+                try:
+                    if info['phone'] != "":
+                        text += f"Phone: {info['phone']}\n\n"
+                except:
+                    pass
+                full_name = ""
+                try:
+                    full_name += f"{contact_person['firstName']}"
+                except:
+                    pass
+                try:
+                    full_name += " " + f"{contact_person['lastName']}"
+                except:
+                    pass
 
-Company: NASHA
+                text += f"Provider: {customer['publicId']}, {customer['name']}, {full_name}\n\n"
 
-Contact person: NASHA
+                if "phone" in contact_person:
+                    text += f"Phone number: {contact_person['phone']}\n\n"
+                try:
+                    text += f"Tax: {customer['taxId']}\n\n"
+                except:
+                    pass
 
-Phone: NASHA
+                tt = []
+                max = 1
+                try:
+                    for i in param['loadingPlaces']:
+                        count = 0
+                        for y in i['address']:
+                            if y == "geocode":
+                                continue
+                            count += len(i["address"][y])
+                        try:
+                            count += len(i["loadingType"])
+                        except:
+                            pass
+                        if count > max:
+                            max = count
+                except:
+                    pass
 
- 
+                tt = ""
+                load = 0
+                unload = 0
+                max += 5
 
-Provider: {customer['publicId']}, {customer['name']}, {contact_person['firstName']} {contact_person['lastName']}
+                for i in param['loadingPlaces']:
+                    earliestLoadingDate = None
+                    latestLoadingDate = None
+                    adress = i["address"]
+                    if i['loadingType'] == "LOADING":
 
-Phone number: {contact_person['phone']}
+                        load += 1
+                        tt = f"Loading: {adress['country']}, {adress['postalCode']} {adress['city']}"
 
-Tax: {customer['taxId']}
+                    else:
+                        unload += 1
+                        tt = f"Unloading: {adress['country']}, {adress['postalCode']} {adress['city']}"
+                    try:
 
+                        try:
+                            earliestLoadingDate = i['earliestLoadingDate'][8:10] + "." + i['earliestLoadingDate'][
+                                                                                         5:7] + "." + i[
+                                                                                                          'earliestLoadingDate'][
+                                                                                                      :4]
 
-Load to be offered:
+                            latestLoadingDate = i['latestLoadingDate'][8:10] + "." + i['latestLoadingDate'][5:7] + "." + \
+                                                i['latestLoadingDate'][:4]
+                        except:
+                            try:
+                                if earliestLoadingDate == None:
+                                    earliestLoadingDate = i['date']
+                            except:
+                                pass
+                        try:
+                            tt += " " * (3 + max - len(tt)) + earliestLoadingDate
+                            tt += " - " + latestLoadingDate
+                        except:
+                            pass
+                    except:
+                        pass
+                    text += tt
+                    text += "\n"
+                    if load==1:
+                        if earliestLoadingDate != None:
+                            if latestLoadingDate == None:
+                                topik += f"({earliestLoadingDate}) "
+                            else:
+                                topik += f"({earliestLoadingDate} - {latestLoadingDate}) "
 
-    On: 05.05.2023
+                text += "\n"
+                adress = param['loadingPlaces'][0]["address"]
+                topik += f"{adress['country']}, {adress['postalCode']} {adress['city']} ---> "
+                adress = param['loadingPlaces'][-1]["address"]
+                topik += f"{adress['country']}, {adress['postalCode']} {adress['city']}"
 
-    Town: DE, 56068 Koblenz
+                if 'distanceInKilometres' in param:
+                    text += f"Distance in km: {param['distanceInKilometres']}\n\n"
 
- 
+                text += f"Length: {param['lengthInMetres']} m\n\n"
 
-Unloading:
+                text += f"Weight/to: {param['weightInTons']} to\n\n"
 
-Town: DE, 15230 Frankfurt (Oder)
+                # text+=f"Loading places: {load}\n\n"
 
- 
+                # text+=f"Unloading places: {unload}\n\n"
 
-Distance in km: {param['distanceInKilometres']}
+                try:
+                    text += f"Price: {param['price']}\n\n"
+                except:
+                    pass
 
-     
+                vechicle = param['vehicleProperties']['property']
+                # [{"category": "VEHICLE_BODY", "values": {"value": "CURTAIN_SIDER"}},
+                # {"category": "VEHICLE_BODY_PROPERTY", "values": ""},
+                # {"category": "VEHICLE_SWAP_BODY", "values": ""},
+                # {"category": "VEHICLE_LOAD_SECURING", "values": {"value": "LASHING_STRAPS"}},
+                # {"category": "VEHICLE_EQUIPMENT", "values": ""},
+                # {"category": "VEHICLE_TYPE", "values": {"value": ["TRAILER", "WAGGON_AND_DRAG"]}}]}
+                Vehicle_Property = {"VEHICLE_BODY": "Vehicle body", "VEHICLE_BODY_PROPERTY": "Body characteristics",
+                                    "VEHICLE_EQUIPMENT": "Equipment ", "VEHICLE_LOAD_SECURING": "Load securing",
+                                    "VEHICLE_SWAP_BODY": "Swap bodies", "VEHICLE_TYPE": "Vehicle type"}
+                proper = {"VEHICLE_BODY": {"BOX": "Box ", "CAR_TRANSPORTER": "Car transporter",
+                                           "CHASSIS": "Container chassis", "COIL_WELL": "Coil trough",
+                                           "CURTAIN_SIDER": "Curtain ", "DRAWER": "Skip loader",
+                                           "DUMP_TRAILER": "Tipper ", "EXTENDABLE_TRAILER": "Extendable trailer",
+                                           "FLATBED": "Flatbed truck", "INLOADER": "Inloader ", "JUMBO": "Jumbo ",
+                                           "LOW_LOADER": "Low loader", "MEGA": "Mega ", "MOVING_FLOOR": "Walking floor",
+                                           "MOVING_FLOOR_FILL_MATERIAL": "Walking floor  (Bulk material)",
+                                           "PLATFORM": "Drop side", "REFRIGERATOR": "Refrigerator ",
+                                           "SEMI_TRAILER_WITH_INCLINED_TABLE": "Semi-trailer  with inclined table",
+                                           "SILO": "Silo trailer", "SPECIAL_TRUCK": "Special truck",
+                                           "SWAP_BODY_TRUCK": "Swap body truck", "TANK": "Tank trailer",
+                                           "TAUTLINER": "Tautliner ", "THERMO": "Thermo ",
+                                           "TIPPER_ROLL_OFF": "Roll-on roll-off tipper ", "TRACTOR_UNIT": "Tractor ",
+                                           "VAN_CAR": "Panel van"},
+                          "VEHICLE_BODY_PROPERTY": {"AIR_SUSPENDED": "Air suspension", "BACK_TIPPER": "Back tipper",
+                                                    "CODE_XL": "Code XL", "DOUBLE_EVAPORATOR": "Dual evaporator",
+                                                    "DOUBLE_FLOOR": "Double floor", "ELEVATING_ROOF": "Lifting roof",
+                                                    "FOLDING_SIDE_BOX": "Folding side box ",
+                                                    "HANGING_GARMENT_CONTAINER": "Hanging garment container ",
+                                                    "LONG_TRUCK": "Euro combi", "LOW_FLOOR": "Low floor",
+                                                    "LOW_LOADING_RAILS": "Steel rails for Joloda rollers ",
+                                                    "REMOVAL_VAN": "Removal truck", "SIDE_TIPPER": "Side tipper",
+                                                    "SLIDING_CURTAIN": "Curtainsider ", "SLIDING_ROOF": "Sliding roof",
+                                                    "WIDENABLE": "Widenable"},
+                          "VEHICLE_SWAP_BODY": {"FORTY_FEET_CONTAINER": "40ft Container",
+                                                "FORTY_FIVE_FEET_CONTAINER": "45ft Container",
+                                                "HALFPIPE_DUMPER": "Skip ",
+                                                "ROLL_ON_ROLL_OFF_CONTAINER": "Roll-on roll-off container ",
+                                                "SWAP_BODY": "Demountable body",
+                                                "TWENTY_FEET_CONTAINER": "20ft Container"},
+                          "VEHICLE_TYPE": {"TRAILER": "Articulated truck", "VEHICLE_UP_TO_12_T": "Vehicle up to 12 t ",
+                                           "VEHICLE_UP_TO_3_5_T": "Vehicle up to 3.5 t ",
+                                           "VEHICLE_UP_TO_7_5_T": "Vehicle up to 7.5 t ",
+                                           "WAGGON_AND_DRAG": "Rigid truck"},
+                          "VEHICLE_LOAD_SECURING": {"ANTI_SLIP_MATS": "Anti slip mats ", "BOARD_WALL": "Side panels",
+                                                    "EDGE_PROTECTION": "Edge protection",
+                                                    "LASHING_STRAPS": "Lashing straps", "LOCKING_BAR": "Locking bar",
+                                                    "PALLET_STOP_BAR": "Pallet retaining bar ",
+                                                    "PERFORATED_BATTEN": "Perforated batten",
+                                                    "STANCHIONS": "Stanchions ", "TENSION_CHAIN": "Lashing chains"},
+                          "VEHICLE_EQUIPMENT": {"ACCESS_RAMP": "Access ramp ", "ADR_EQUIPMENT_SET": "ADR ",
+                                                "A_PLATE": "Waste carrier licence ",
+                                                "CUSTOMS_SEAL_STRING": "Customs seal string ",
+                                                "ESCORT_VEHICLE_TYPE_3": "Escort vehicle type 3 ",
+                                                "ESCORT_VEHICLE_TYPE_4": "Escort vehicle type 4 ",
+                                                "FIXED_LOADING_CRANE": "Fixed loading crane ",
+                                                "MEAT_HOOK": "Meat hooks", "PARTITION_WALL": "Partition wall",
+                                                "PORTABLE_FORKLIFT": "Portable forklift",
+                                                "PORTABLE_PUMP_TRUCK": "Pallet lifter",
+                                                "SATELLITE_TRACKING": "Satellite tracking",
+                                                "SECOND_DRIVER": "2nd driver", "TAIL_LIFT": "Tail lift",
+                                                "TARPAULIN_COVER": "Tarpaulin cover",
+                                                "WOOD_STANCHIONS": "Log stanchions"}}
+                t = ""
 
+                for i in vechicle:
+                    try:
+                        if i['values'] != "" and i['values'] != " " and i['values'] != {} and i['values'] != [] and i[
+                            'values'] != None:
+                            if isinstance(i['values']['value'], str):
+                                i['values']['value'] = [i['values']['value']]
 
-Length: {param['lengthInMetres']} m
+                            t += f"{Vehicle_Property[i['category']]}: "
 
-Weight/to: {param['weightInTons']} to
+                            for y in i['values']['value']:
 
-Loading places: 1
+                                a = proper[i['category']][y].replace('  ', ' ')
+                                if a[-1] == " ":
+                                    a = a[:-1]
+                                t += f"{a}, "
+                            if t[-2:] == ", ":
+                                t = t[:-2]
+                            t += '\n'
+                    except:
+                        pass
+                try:
+                    if len(t) > 5:
+                        text += f"Vehicle:\n{t}\n"
+                except:
+                    pass
+                try:
+                    text += f"Remark:\n{param['publicRemark']}\n\n"
+                except:
+                    pass
+                return text, topik
 
-Unloading places: 1
+            add_text = dd.dic[threading.current_thread().name]['text']
+            customer = param['customer']
+            contact_person = param['contactPerson']
+            if 'lastName' in contact_person == 0:
+                contact_person['lastName'] = ''
+            if 'firstName' in contact_person == 0:
+                contact_person['firstName'] = ''
+            text = add_text + "\n\n" * bool(len(add_text))
+            t, topik = parsing_for_mail()
+            text += t
+            mail_function(info, param["contactPerson"], topik, text, lock_smtp, lock_imap)
 
-
- 
-
-Required type of vehicle: Articulated truck
-
-    Type of body: Tautliner, Curtain
-"""
-            try:
-                text+=f"""
-Price: {param['price']}
-"""
-            except:
-                pass
-            try:
-                text+=f"""
-Remark:
-
-{param['publicRemark']}
-"""
-            except:
-                pass
-            print(text)
-
-            #print(add_text)
-            #print(unidecode.unidecode(str(param)))
-        
         text_req = main_text(param)
         for i in range(3):
             Thread(target=send_request, name=threading.current_thread().name, args=(i,)).start()
 
     # get_sheets and get_car_by_car:
     from Data import Data
-    
+
     event = {}
-    dd=Data(cread_file=info['cread_file'])
-    
+    dd = Data(cread_file=info['cread_file'])
 
     for i in dd.dic:
         event[i] = threading.Event()
         # for y in dd[i]:
-        Thread(target=searching_id, args=(event[i], dd.dic[i]['param'].copy(),  ), name=i).start()
+        Thread(target=searching_id, args=(event[i], dd.dic[i]['param'].copy(),), name=i).start()
+
     def update():
         new_dic = dd.get()
-        if new_dic=={}:
+        if new_dic == {}:
             for k in dd.dic.keys():
                 event[k].set()
-            dd.dic={}
+            dd.dic = {}
             return
             #
         for k in dd.dic.keys():
-            if (k in new_dic.keys()) ==0:
+            if (k in new_dic.keys()) == 0:
                 event[k].set()
                 del dd.dic[k]
-                
 
-        for k,v in new_dic.items():
-            if (k in dd.dic) ==0:
-                dd.dic[k]=v
-                event[k]=threading.Event()
-                Thread(target=searching_id, args=(event[k],v['param'].copy(),), name=k).start()
+        for k, v in new_dic.items():
+            if (k in dd.dic) == 0:
+                dd.dic[k] = v
+                event[k] = threading.Event()
+                Thread(target=searching_id, args=(event[k], v['param'].copy(),), name=k).start()
 
-                
+
             else:
-                if v['param'] !=dd.dic[k]['param']:
+                if v['param'] != dd.dic[k]['param']:
                     event[k].set()
                     del event[k]
-                    event[k]=threading.Event()
+                    event[k] = threading.Event()
                     Thread(target=searching_id, args=(event[k], v['param'].copy(),), name=k).start()
-                    dd.dic[k]['param']=v['param']
-                elif v['text'] !=dd.dic[k]['text']:
-                    dd.dic[k]['text']=v['text']
+                    dd.dic[k]['param'] = v['param']
+                elif v['text'] != dd.dic[k]['text']:
+                    dd.dic[k]['text'] = v['text']
+
     import time
     print('ok')
+
+    def save():
+        while True:
+            try:
+                time.sleep(1)
+                with publick_dic_lock:
+                    if (threading.current_thread().name in public_dict) == 0:
+                        public_dict[threading.current_thread().name] = []
+                    public_dict[threading.current_thread().name].extend(list_mail)
+                    with open('list_mail.json', 'w') as f:
+                        json.dump(public_dict, f)
+            except Exception as e:
+                raise e
+
+    Thread(target=save, name=threading.current_thread().name).start()
     while True:
-        time.sleep(5)
+        time.sleep(2)
         update()
 
-    
-    
-    
     # receive update wgm - change
-    #dd['wgm'] = new_param
-    #event['wgm'].set()
-    #e = threading.Event()
-    #for y in dd['wgm']:
+    # dd['wgm'] = new_param
+    # event['wgm'].set()
+    # e = threading.Event()
+    # for y in dd['wgm']:
     #    Thread(target=searching_id, args=(dd['wgm'][y], e,), name='wgm')
-    #event['wgm'] = e
+    # event['wgm'] = e
+
 
 for i in info:
-    
-    Thread(target=freight_search,args=(info[i],),name=i).start()
+    Thread(target=freight_search, args=(info[i],), name=i).start()
+
+
+def upadte_block_list():
+    while True:
+        try:
+            with open('block_list.json', 'r') as f:
+                di = json.load(f)
+            global block_list_country
+            global block_list
+            block_list_country = di["country"]
+            block_list = di["id"]
+        except:
+            pass
+
+
+Thread(target=upadte_block_list).start()
