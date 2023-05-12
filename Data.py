@@ -126,4 +126,4 @@ class Data:
                 elif v['text'] !=self.dic[k]['text']:
                     self.dic[k]['text']=v['text']
                     #event? no
-print(Data().dic)
+

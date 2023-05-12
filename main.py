@@ -6,7 +6,9 @@ import gspread
 import pandas as pd
 import unidecode
 import xmltodict
+
 from datetime import datetime, timedelta
+from datetime import time as timee
 from threading import Thread, Lock
 from mail_function import mail_function
 
@@ -30,10 +32,41 @@ except:
     block_list = []
 
 publick_dic_lock = Lock()
+stop_event=threading.Event()
 
+
+def stop():
+    while True:
+        now = datetime.now().time()
+        start_time = timee(hour=7, minute=30)
+        end_time = timee(hour=18)
+
+        if start_time <= now <= end_time:
+            try:
+
+                if q:
+                   public_dict={}
+                   try:
+                       with open('list_mail.json', 'r') as f:
+                           public_dict = json.load(f)
+                   except Exception as e:
+                       public_dict = {}
+
+                stop_event.set()
+                q = 0
+
+            except:
+                pass
+        else:
+            try:
+                q=1
+                stop_event.clear()
+            except:
+                pass
+Thread(target=stop).start()
 
 def time_now():
-    return (datetime.now() - timedelta(minutes=60*2)).isoformat()[:-3] + 'Z'
+    return (datetime.now()).isoformat()[:-3] + 'Z'
 
 
 def Creatbase():
@@ -44,10 +77,13 @@ def Creatbase():
     # if datetime.isoweekday(datetime.now()) == 7:
     #    return (datetime.now() - timedelta(days=3)).isoformat()[:-3] + 'Z'
     #
-    return (datetime.now() - timedelta(minutes=60*24*2)).isoformat()[:-3] + 'Z'
+    return (datetime.now() - timedelta(minutes=10)).isoformat()[:-3] + 'Z'
 
 
 def freight_search(info: dict):
+    stop_event.wait()
+    print('ok')
+
     lock_imap = Lock()
     lock_smtp = Lock()
     pull_id = []
@@ -215,6 +251,7 @@ def freight_search(info: dict):
 <v2:value>CURTAIN_SIDER</v2:value>
 </v2:values>
 """
+
             b += "</v2:property>"
             b += """<v2:property>
             <v2:category>VEHICLE_TYPE</v2:category>"""
@@ -235,7 +272,8 @@ def freight_search(info: dict):
             return b
 
         def send_request(idd=0, creat_time=Creatbase(), querry=time_now()):
-
+            if idd==0:
+                stop_event.wait()
             if even.is_set():
                 # (threading.current_thread().name)
                 exit()
@@ -261,7 +299,7 @@ def freight_search(info: dict):
                         Thread(target=send_request, args=(idd + i, creat_time, querry),
                                name=threading.current_thread().name).start()
             except Exception as e:
-                # print(e)
+
                 pass
 
             if idd == 0:
@@ -318,7 +356,7 @@ def freight_search(info: dict):
                     #    else:
                     #        list_public_id['24.04'].append(public_id)
 
-                    # print(xmltodict.parse(timmo_get(id)))
+
 
 
 
@@ -396,7 +434,7 @@ def freight_search(info: dict):
                         except:
                             pass
 
-                # print(text)
+
                 return change(text)
 
             if public_id_list == []:
@@ -729,25 +767,37 @@ def freight_search(info: dict):
                     dd.dic[k]['text'] = v['text']
 
     import time
-    print('ok')
+
 
     def save():
         while True:
             try:
-                time.sleep(1)
+                if (stop_event.is_set()) ==0:
+                    list_mail=[]
+                    stop_event.wait()
+                time.sleep(3)
                 with publick_dic_lock:
                     if (threading.current_thread().name in public_dict) == 0:
                         public_dict[threading.current_thread().name] = []
-                    public_dict[threading.current_thread().name].extend(list_mail)
+                    for i in list_mail:
+                        if (i in public_dict[threading.current_thread().name])==0:
+                            public_dict[threading.current_thread().name].append(i)
+
                     with open('list_mail.json', 'w') as f:
                         json.dump(public_dict, f)
             except Exception as e:
-                raise e
+                pass
 
     Thread(target=save, name=threading.current_thread().name).start()
     while True:
-        time.sleep(2)
-        update()
+
+
+        try:
+            stop_event.wait()
+            time.sleep(2)
+            update()
+        except:
+            pass
 
     # receive update wgm - change
     # dd['wgm'] = new_param
@@ -765,6 +815,7 @@ for i in info:
 def upadte_block_list():
     while True:
         try:
+            stop_event.wait()
             with open('block_list.json', 'r') as f:
                 di = json.load(f)
             global block_list_country
