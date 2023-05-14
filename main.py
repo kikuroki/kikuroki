@@ -288,7 +288,9 @@ def freight_search(info: dict):
             return b
 
         def send_request(idd=0, creat_time=Creatbase(), querry=time_now()):
-
+            if even.is_set():
+                # (threading.current_thread().name)
+                exit()
             if stop_event.is_set()==0:
                 list_mail = []
                 if idd==0:
@@ -303,9 +305,7 @@ def freight_search(info: dict):
 
                 else:
                     exit()
-            if even.is_set():
-                # (threading.current_thread().name)
-                exit()
+
 
             url = r"https://webservice.timocom.com/tcconnect/ws_v2/soap1_2"
 
