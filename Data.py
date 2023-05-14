@@ -25,12 +25,16 @@ class Data:
         self.wks = self.database.worksheet(("Sheet1"))
 
     def get(self, init=0):
-        
-        asd = pd.DataFrame(self.wks.get_all_values(), dtype=str).fillna('')
+        try:
+            asd = pd.DataFrame(self.wks.get_all_values(), dtype=str).fillna('')
+        except:
+            self.reconect()
+            asd = pd.DataFrame(self.wks.get_all_values(), dtype=str).fillna('')
         
         col = [i.lower().replace(' ', '') for i in asd.iloc[0].values.tolist()]
         asd.columns = col
         asd = asd.drop([0]).reset_index(drop=True)
+        asd = asd.apply(lambda x: x.astype(str).str.upper())
         
 
         dic = {}

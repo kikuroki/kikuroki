@@ -1,9 +1,12 @@
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+
+import unidecode
 from imapclient import IMAPClient
 from threading import Thread
 def mail_function(info_from,info_to,topik, text,lock_smtp,lock_imap):
+    print(unidecode.unidecode(topik))
 
     msg = MIMEText(text)
     #body = MIMEMultipart('alternative')
@@ -40,21 +43,23 @@ def mail_function(info_from,info_to,topik, text,lock_smtp,lock_imap):
 
                     respond=server.send_message(msg)
         except Exception as e:
-            raise e
-        t=0
-        while t<5:
-            t+=1
-            try:
-                with lock_imap:
-                    imap = IMAPClient('coltrans.pl', use_uid=True)
-                    imap.login(f"{info_from['mail']}", f"{info_from['password']}")
-                    respond = imap.append('SENT.check', msg.as_bytes(), flags=(b'\\Seen'))
-                    if "Done" in str(respond):
-                        break
-            except:
-                pass
+            pass
+    if respond==0:
+        exit()
+    t=0
+    while t<5:
+        t+=1
+        try:
+            with lock_imap:
+                imap = IMAPClient('coltrans.pl', use_uid=True)
+                imap.login(f"{info_from['mail']}", f"{info_from['password']}")
+                respond = imap.append('SENT', msg.as_bytes(), flags=(b'\\Seen'))
+                if "Done" in str(respond):
+                    break
+        except:
+            pass
 
-        return msg
+    return msg
 
 
 

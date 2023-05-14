@@ -6,7 +6,7 @@ import gspread
 import pandas as pd
 import unidecode
 import xmltodict
-
+from update_block_list import update as get_block_list
 from datetime import datetime, timedelta
 from datetime import time as timee
 from threading import Thread, Lock
@@ -17,40 +17,40 @@ with open('pas.txt', 'r') as f:
     pas = f.read()
 with open('js.json', 'r') as f:
     info = json.load(f)
-try:
-    with open('list_mail.json', 'r') as f:
-        public_dict = json.load(f)
-except Exception as e:
-    public_dict={}
-try:
-    with open('block_list.json', 'r') as f:
-        di = json.load(f)
-    block_list_country = di["country"]
-    block_list = di["id"]
-except:
-    block_list_country = []
-    block_list = []
+#try:
+#    with open('list_mail.json', 'r') as f:
+#        public_dict = json.load(f)
+#except Exception as e:
+public_dict={}
+#try:
+#    with open('block_list.json', 'r') as f:
+#        di = json.load(f)
+#except:
+#    block_list_country = []
+#    block_list = []
 
-publick_dic_lock = Lock()
+loading_block,company_country_block,company_id_block = [],[],[]
+get_block_list(loading_block,company_country_block,company_id_block,abc=1)
+
+Thread(target=get_block_list,args=(loading_block,company_country_block,company_id_block)).start()
+
+
+
+
+#publick_dic_lock = Lock()
 stop_event=threading.Event()
 
 
 def stop():
     while True:
         now = datetime.now().time()
-        start_time = timee(hour=7, minute=30)
-        end_time = timee(hour=18)
-
+        start_time = timee(hour=6, minute=30)
+        end_time = timee(hour=19)
+        q=0
         if start_time <= now <= end_time:
             try:
 
-                if q:
-                   public_dict={}
-                   try:
-                       with open('list_mail.json', 'r') as f:
-                           public_dict = json.load(f)
-                   except Exception as e:
-                       public_dict = {}
+                #if q:
 
                 stop_event.set()
                 q = 0
@@ -64,9 +64,9 @@ def stop():
             except:
                 pass
 Thread(target=stop).start()
-
+#stop_event.set()
 def time_now():
-    return (datetime.now()).isoformat()[:-3] + 'Z'
+    return ((datetime.now()).isoformat()[:]+'Z[UTC]' )
 
 
 def Creatbase():
@@ -77,10 +77,11 @@ def Creatbase():
     # if datetime.isoweekday(datetime.now()) == 7:
     #    return (datetime.now() - timedelta(days=3)).isoformat()[:-3] + 'Z'
     #
-    return (datetime.now() - timedelta(minutes=10)).isoformat()[:-3] + 'Z'
+    return ((datetime.now() - timedelta(minutes=10)).isoformat()[:] )
 
 
 def freight_search(info: dict):
+
     stop_event.wait()
     print('ok')
 
@@ -90,11 +91,11 @@ def freight_search(info: dict):
     lock_list = Lock()
     lock_for_mail = Lock()
 
-    try:
-        list_mail = public_dict[threading.current_thread().name]
+    #try:
+    #    list_mail = public_dict[threading.current_thread().name]
 
-    except:
-        list_mail = []
+    #except:
+    list_mail = []
 
     # def send_mail(dir):
     #    global list_today
@@ -133,9 +134,24 @@ def freight_search(info: dict):
                        </v2:sortings>
                      <v2:firstResult>{start}</v2:firstResult>
                        <v2:maxResults>30</v2:maxResults>
-                       <v2:date>
-                       <v2:dateInterval>"""
-            b += f""" 
+                       
+                       """
+            if params['date_earliest'] == '':
+                params['date_earliest']=datetime.now().date()
+            if  params['date_latest'] == '' or params['date_latest'] ==params['date_earliest']:
+                b+=f"""<v2:date>
+                <v2:individualDates>
+                <v2:date>{params['date_earliest']}</v2:date>
+                <v2:date>{params['date_earliest']}</v2:date>
+                <v2:date>{params['date_earliest']}</v2:date>
+                <v2:date>{params['date_earliest']}</v2:date>
+                <v2:date>{params['date_earliest']}</v2:date>
+                </v2:individualDates>
+                </v2:date>"""
+            else:
+
+                b += f"""<v2:date>
+                 <v2:dateInterval>
                        <v2:start>{params['date_earliest']}</v2:start>
                        <v2:end>{params['date_latest']}</v2:end>
                        </v2:dateInterval>
@@ -272,15 +288,35 @@ def freight_search(info: dict):
             return b
 
         def send_request(idd=0, creat_time=Creatbase(), querry=time_now()):
-            if idd==0:
-                stop_event.wait()
+
+            if stop_event.is_set()==0:
+                list_mail = []
+                if idd==0:
+                    try:
+                        stop_event.wait()
+
+                        for i in range(1, 4):
+                            Thread(target=send_request, args=(idd + i,),
+                                   name=threading.current_thread().name).start()
+                    except:
+                        pass
+
+                else:
+                    exit()
             if even.is_set():
                 # (threading.current_thread().name)
                 exit()
 
             url = r"https://webservice.timocom.com/tcconnect/ws_v2/soap1_2"
+
+
             qwe = requests.post(url, text_req.format(creat=creat_time, query=querry, start=idd * 30))
+
             dir = (xmltodict.parse(qwe.text))
+            #print(text_req)
+
+
+            #print(unidecode.unidecode(str(dir)))
 
             try:
                 if isinstance(dir['env:Envelope']['env:Body']['ns2:FindCargoOffersResponse']['ns2:payload'][
@@ -325,6 +361,7 @@ def freight_search(info: dict):
                                 i['ns2:vehicleProperties']['ns2:property'][4]['ns2:values']:
                             if 'ADR_EQUIPMENT_SET' in i['ns2:vehicleProperties']['ns2:property'][4]['ns2:values'][
                                 'ns2:value']:
+
                                 continue
                     except Exception as e:
                         pass
@@ -332,6 +369,13 @@ def freight_search(info: dict):
 
                     try:
                         if float(i['ns2:lengthInMetres']) < 12:
+
+                            continue
+                    except:
+                        pass
+                    try:
+                        if float(i['ns2:weightInTons']) < 10:
+
                             continue
                     except:
                         pass
@@ -478,15 +522,18 @@ def freight_search(info: dict):
 
             for i in qwe:
                 try:
-                    if int(i['publicId']) in block_list:
+                    print(i)
+                    if i['customer']['companyAddress']['country'] in company_country_block:
                         continue
-                except:
+                except Exception as e:
                     pass
                 try:
-                    if i['companyAddress']['country'] in block_list_country:
+                    if str(i['customer']['publicId']) in company_id_block:
                         continue
-                except:
+                except Exception as e:
+
                     pass
+
                 with lock_for_mail:
                     if i in list_mail:
                         pass
@@ -546,6 +593,7 @@ def freight_search(info: dict):
                 load = 0
                 unload = 0
                 max += 5
+                qq=0
 
                 for i in param['loadingPlaces']:
                     earliestLoadingDate = None
@@ -584,12 +632,13 @@ def freight_search(info: dict):
                         pass
                     text += tt
                     text += "\n"
-                    if load==1:
+                    if load and qq:
                         if earliestLoadingDate != None:
                             if latestLoadingDate == None:
                                 topik += f"({earliestLoadingDate}) "
                             else:
                                 topik += f"({earliestLoadingDate} - {latestLoadingDate}) "
+                        qq=0
 
                 text += "\n"
                 adress = param['loadingPlaces'][0]["address"]
@@ -769,37 +818,39 @@ def freight_search(info: dict):
     import time
 
 
-    def save():
-        while True:
-            try:
-                if (stop_event.is_set()) ==0:
-                    list_mail=[]
-                    stop_event.wait()
-                time.sleep(3)
-                with publick_dic_lock:
-                    if (threading.current_thread().name in public_dict) == 0:
-                        public_dict[threading.current_thread().name] = []
-                    for i in list_mail:
-                        if (i in public_dict[threading.current_thread().name])==0:
-                            public_dict[threading.current_thread().name].append(i)
-
-                    with open('list_mail.json', 'w') as f:
-                        json.dump(public_dict, f)
-            except Exception as e:
-                pass
-
-    Thread(target=save, name=threading.current_thread().name).start()
+    #def save():
+    #    while True:
+    #        try:
+    #            if (stop_event.is_set()) ==0:
+    #                list_mail=[]
+    #                stop_event.wait()
+    #            time.sleep(3)
+    #            with publick_dic_lock:
+    #                if (threading.current_thread().name in public_dict) == 0:
+    #                    public_dict[threading.current_thread().name] = []
+    #                for i in list_mail:
+    #                    if (i in public_dict[threading.current_thread().name])==0:
+    #                        public_dict[threading.current_thread().name].append(i)
+    #
+    #                with open('list_mail.json', 'w') as f:
+    #                    json.dump(public_dict, f)
+    #        except Exception as e:
+    #            pass
+    #Thread(target=save, name=threading.current_thread().name).start()
     while True:
-
 
         try:
             stop_event.wait()
+        except:
+            pass
+        try:
+
             time.sleep(2)
             update()
         except:
             pass
 
-    # receive update wgm - change
+    # receive update_block_list.py wgm - change
     # dd['wgm'] = new_param
     # event['wgm'].set()
     # e = threading.Event()
@@ -812,18 +863,7 @@ for i in info:
     Thread(target=freight_search, args=(info[i],), name=i).start()
 
 
-def upadte_block_list():
-    while True:
-        try:
-            stop_event.wait()
-            with open('block_list.json', 'r') as f:
-                di = json.load(f)
-            global block_list_country
-            global block_list
-            block_list_country = di["country"]
-            block_list = di["id"]
-        except:
-            pass
 
 
-Thread(target=upadte_block_list).start()
+
+
