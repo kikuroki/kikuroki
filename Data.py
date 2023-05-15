@@ -17,7 +17,10 @@ class Data:
         self.database = self.gc.open("search")
         self.wks = self.database.worksheet(("Sheet1"))
         self.dic = {}
-        self.get(1)
+        try:
+            self.get(1)
+        except:
+            pass
 
     def reconect(self):
         self.gc = gspread.service_account(self.cread_file)

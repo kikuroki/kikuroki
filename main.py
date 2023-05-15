@@ -44,7 +44,7 @@ stop_event=threading.Event()
 def stop():
     while True:
         now = datetime.now().time()
-        start_time = timee(hour=6, minute=30)
+        start_time = timee(hour=7, minute=30)
         end_time = timee(hour=19)
         q=0
         if start_time <= now <= end_time:
