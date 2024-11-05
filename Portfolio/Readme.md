@@ -9,7 +9,7 @@ Welcome to my portfolio! Here, I document a summary of my projects in the data f
 
 # 🐍Python Developer (at Coltrans sp. z o.o.)
 
-## Context: 
+### Context: 
 During my work, I implemented several pilot projects under NDA with limited deadlines (1-2 weeks for each), aimed at creating prototypes for the company's internal needs. To quickly launch the functionality under strict deadlines and minimal resources, it was decided to use Google API and Google Sheets. This approach allowed colleagues from logistics, with whom I had previously worked as a logistician, to easily master the tool and start using it.
 
 At all stages of the project, I acted independently: debugged, tested, organized feedback with end users and discussed the development plan with the manager. Debugging sometimes took place in real-time, during active product use, ensuring immediate issue resolution and minimal disruption.
@@ -28,7 +28,7 @@ This portfolio illustrates my comprehensive approach to completing tasks, includ
 | 🤝✉️Weekly Automated Requests for New Loads from Partners | 1 | 1 | 1 | This project was created to automate weekly requests to partners about the availability of loads that could be of interest to the company's logisticians. The user could specify the company name, the representative's email, the language of communication, as well as customize the text of the message and specify the address from which the request would be sent. All settings were organized in a separate Google Sheets tab, where you could edit the content of the message and select the sender. |
 ***
 # 🐢Data Science PET Projects
-
+###SOME CONTEXT
 | Project Link | Area of Analysis | Tools | Libraries | Project Description |
 |---|---|---|---|---|
 | 🏠📈 [Housing price prediction]() | Housing Market & Price Estimation | Jupyter Notebook, Python | scikit-learn, pandas, numpy, seaborn, matplotlib | This project predicts housing prices using multiple models, including Random Forest, Decision Tree, and Linear Regression. Extensive feature selection and hyperparameter tuning are performed to achieve accurate price estimates for housing properties. |
