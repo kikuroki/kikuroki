@@ -1,16 +1,26 @@
 ## Hi there 👋
+Image right there
+Something about me (copy from resume?)
+### 📚 Projects
+Welcome to my portfolio, where I showcase my projects.
 
-<!--
-**kikuroki/kikuroki** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
+### 🛠️ Tools
+- Language: SQL, Python
+- Liberies: 
+- Database: Google BigQuery, PostgreSQL, SQLite
+- Visualization: Tableau
 
-Here are some ideas to get you started:
+### 🛠️ Additional Tools
+- Excel, Google Sheets
+- C++
+- PyQt5
+- PostMan, PostMan API
+- Google API, Google sheets API
 
-- 🔭 I’m currently working on ...
-- 🌱 I’m currently learning ...
-- 👯 I’m looking to collaborate on ...
-- 🤔 I’m looking for help with ...
-- 💬 Ask me about ...
-- 📫 How to reach me: ...
-- 😄 Pronouns: ...
-- ⚡ Fun fact: ...
--->
+### personal Skills
+copy from resume?
+
+## 👋🏻 Connect with Me
+  - [Linkedin]
+  -  Phone number , email, canada
+
