@@ -2,16 +2,14 @@
 
 Welcome to my portfolio! Here, I document a summary of my projects in the data field. 
 
-***
 ## 📚 Table of Contents
 
-- [🐍Python Developer](#python-developer-at-coltrans-sp-z-oo-previous-place-of-work)
-- [🐢PET Projects](#pet-projects)
-- [University]()
+- 🐍[Python Developer](#python-developer-at-coltrans-sp-z-oo)
+- 🐢[PET Projects](#data-science-pet-projects)
 
-# 🐍Python Developer (at Coltrans sp. z o.o., previous place of work)
+# 🐍Python Developer (at Coltrans sp. z o.o.)
 
-Context: <br>
+## Context: 
 During my work, I implemented several pilot projects under NDA with limited deadlines (1-2 weeks for each), aimed at creating prototypes for the company's internal needs. To quickly launch the functionality under strict deadlines and minimal resources, it was decided to use Google API and Google Sheets. This approach allowed colleagues from logistics, with whom I had previously worked as a logistician, to easily master the tool and start using it.
 
 At all stages of the project, I acted independently: debugged, tested, organized feedback with end users and discussed the development plan with the manager. Debugging sometimes took place in real-time, during active product use, ensuring immediate issue resolution and minimal disruption.
@@ -20,7 +18,7 @@ For access to APIs from third-party providers such as Timocom, Transporeon and T
 
 This portfolio illustrates my comprehensive approach to completing tasks, including planning, technical implementation, user interaction, and working in a fast-paced environment. If you would like further confirmation of my work, you may refer to a [reference letter]() written by my manager, Sergey.
 
-***
+
 
 | Project Link | Area of Analysis | Tools | Libraries | Project Description |
 |---|---|---|---|---|
@@ -29,7 +27,7 @@ This portfolio illustrates my comprehensive approach to completing tasks, includ
 | 🔍✉️Automated Loads Search | 1 | 1 | 1 | This project automated the route search process for logisticians on Timocom, allowing to set search parameters, such as start and end points (optionally including a radius of up to 100 km) and dates. The program automatically generated the text of the message on behalf of the user who set the parameters, for the owner of the suitable route. Due to API limitations, all messages were sent from one email address, so a forwarding system was implemented: using metadata and mail content analysis, the program determined to which of the logisticians the response was addressed and forwarded it, which ensured high accuracy and convenience of feedback processing. |
 | 🤝✉️Weekly Automated Requests for New Loads from Partners | 1 | 1 | 1 | This project was created to automate weekly requests to partners about the availability of loads that could be of interest to the company's logisticians. The user could specify the company name, the representative's email, the language of communication, as well as customize the text of the message and specify the address from which the request would be sent. All settings were organized in a separate Google Sheets tab, where you could edit the content of the message and select the sender. |
 ***
-# 🐢PET Projects
+# 🐢Data Science PET Projects
 
 | Project Link | Area of Analysis | Tools | Libraries | Project Description |
 |---|---|---|---|---|
@@ -37,5 +35,5 @@ This portfolio illustrates my comprehensive approach to completing tasks, includ
 | 🛒📊 [Superstore E-Sales Perfomance]() | Retail Analytics & Sales Performance Analysis | Tableau | Tableau | This project analyzes e-sales performance for a superstore, focusing on sales trends, customer behavior, and product performance. Visual dashboards provide insights into sales distribution across Canada and product categories. |
 | 🏠🔍 [Analyzing Airbnb Data]() | Short-term Rental Market | SQL | SQL | This project analyzes Airbnb listings in Seattle to uncover trends related to seasonal pricing, neighborhood characteristics, and the growth of homestay activities. Data from Airbnb is used to explore listing characteristics, seasonal demand, and growth trends over time. |
 ***
-ДОБАВИТЬ УНИК ПРОЕКТ?
+
 
