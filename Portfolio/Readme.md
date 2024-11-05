@@ -16,7 +16,7 @@ At all stages of the project, I acted independently: debugged, tested, organized
 
 For access to APIs from third-party providers such as Timocom, Transporeon and Trans.eu (platforms for loads matching), I also personally negotiated, which contributed to the successful integration of the necessary data into the project.
 
-This portfolio illustrates my comprehensive approach to completing tasks, including planning, technical implementation, user interaction, and working in a fast-paced environment. If you would like further confirmation of my work, you may refer to a [reference letter]() written by my manager, Sergii.
+This portfolio illustrates my comprehensive approach to completing tasks, including planning, technical implementation, user interaction, and working in a fast-paced environment. If you would like further confirmation of my work, you may refer to a [reference letter]() written by my manager, Sergii (with contact!#@#@!$!@!@).
 
 
 
