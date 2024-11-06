@@ -16,7 +16,7 @@ At all stages of the project, I acted independently: debugged, tested, organized
 
 For access to APIs from third-party providers such as Timocom, Transporeon and Trans.eu (platforms for loads matching), I also personally negotiated, which contributed to the successful integration of the necessary data into the project.
 
-This portfolio illustrates my comprehensive approach to completing tasks, including planning, technical implementation, user interaction, and working in a fast-paced environment. If you would like further confirmation of my work, you may refer to a [reference letter]() written by my manager, Sergii (with contact!#@#@!$!@!@).
+This portfolio illustrates my comprehensive approach to completing tasks, including planning, technical implementation, user interaction, and working in a fast-paced environment. If you would like further confirmation of my work, you may refer to a [reference letter]() written by my manager, Sergii, which includes his contact information.
 
 
 
@@ -28,7 +28,8 @@ This portfolio illustrates my comprehensive approach to completing tasks, includ
 | 🤝✉️Weekly Automated Requests for New Loads from Partners | Python, SQLite, Google Sheets, Googel API | pandas, numpy, smtplib, asyncio | This project was created to automate weekly requests to partners about the availability of loads that could be of interest to the company's logisticians. The user could specify the company name, the representative's email, the language of communication, as well as customize the text of the message and specify the address from which the request would be sent. All settings were organized in a separate Google Sheets tab, where you could edit the content of the message and select the sender. |
 ***
 # 🐢Data Science PET Projects
-###SOME CONTEXT
+### Context
+This section highlights a selection of personal projects focused on data science and analytics, aimed at improving technical skills and providing insights into various industries. These projects showcase a diverse set of tools and methodologies, demonstrating the versatility and understanding of data science applications across a variety of fields.
 | Project Link | Area of Analysis | Tools | Libraries | Project Description |
 |---|---|---|---|---|
 | 🏠📈 [Housing price prediction]() | Housing Market & Price Estimation | Jupyter Notebook, Python | scikit-learn, pandas, numpy, seaborn, matplotlib | This project predicts housing prices using multiple models, including Random Forest, Decision Tree, and Linear Regression. Extensive feature selection and hyperparameter tuning are performed to achieve accurate price estimates for housing properties. |
