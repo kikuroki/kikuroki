@@ -28,7 +28,7 @@ This portfolio illustrates my comprehensive approach to completing tasks, includ
 | 🤝✉️Weekly Automated Requests for New Loads from Partners | Python, SQLite, Google Sheets, Googel API | pandas, numpy, smtplib, asyncio | This project was created to automate weekly requests to partners about the availability of loads that could be of interest to the company's logisticians. The user could specify the company name, the representative's email, the language of communication, as well as customize the text of the message and specify the address from which the request would be sent. All settings were organized in a separate Google Sheets tab, where you could edit the content of the message and select the sender. |
 ***
 # 🐢Data Science PET Projects
-### Context
+### Context:
 This section highlights a selection of personal projects focused on data science and analytics, aimed at improving technical skills and providing insights into various industries. These projects showcase a diverse set of tools and methodologies, demonstrating the versatility and understanding of data science applications across a variety of fields.
 | Project Link | Area of Analysis | Tools | Libraries | Project Description |
 |---|---|---|---|---|
