@@ -23,8 +23,10 @@ Welcome to my portfolio, where I showcase my [projects]().
 - Google API, Google sheets API
   
 ## 👋🏻 Connect with Me
-  - [Linkedin]
-  -  Phone number , email, canada
+  - [Linkind](https://www.linkedin.com/in/oleksii-batiuchenko-08172b160/)
+  - +1-(778)-238-8761
+  - 7alex0041@gmail.com
+  - Canada BC, Surrey V3T
 
 
 
