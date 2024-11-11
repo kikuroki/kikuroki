@@ -6,7 +6,7 @@ Motivated to start a career as a Junior Data Scientist, I have strong analytical
 
 ##
 ### 📚 Projects
-Welcome to my portfolio, where I showcase my [projects](https://github.com/kikuroki/kikuroki/Portfolio/Readme.md).
+Welcome to my portfolio, where I showcase my [projects]([https://github.com/kikuroki/kikuroki/Portfolio/Readme.md](https://github.com/kikuroki/kikuroki/blob/main/Portfolio/Readme.md)).
 
 ### 🛠️ Tools
 - Language: Python, SQL
@@ -23,7 +23,7 @@ Welcome to my portfolio, where I showcase my [projects](https://github.com/kikur
 - Google API, Google sheets API
   
 ## 👋🏻 Connect with Me
-  - [Linkind](https://www.linkedin.com/in/oleksii-batiuchenko-08172b160/)
+  - [Linkind](https://www.linkedin.com/in/oleksii-batiuchenko)
   - +1-(778)-238-8761
   - 7alex0041@gmail.com
   - Canada BC, Surrey V3T
