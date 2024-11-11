@@ -6,7 +6,7 @@ Motivated to start a career as a Junior Data Scientist, I have strong analytical
 
 ##
 ### 📚 Projects
-Welcome to my portfolio, where I showcase my [projects]([https://github.com/kikuroki/kikuroki/Portfolio/Readme.md](https://github.com/kikuroki/kikuroki/blob/main/Portfolio/Readme.md)).
+Welcome to my portfolio, where I showcase my [projects](https://github.com/kikuroki/kikuroki/blob/main/Portfolio/Readme.md).
 
 ### 🛠️ Tools
 - Language: Python, SQL
