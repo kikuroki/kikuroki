@@ -9,15 +9,13 @@ Motivated to start a career as a Junior Data Scientist, I have strong analytical
 Welcome to my portfolio, where I showcase my [projects](https://github.com/kikuroki/kikuroki/blob/main/Portfolio/Readme.md).
 
 ### 🛠️ Tools
-- Language: Python, SQL
-- Liberies: Scikit-Learn, NumPy, Pandas, Matplotlib, Seaborn, PyQt
-- Database: Google BigQuery, PostgreSQL, SQLite
-- Visualization: Tableau
+- Language: Python, SQL( Postgre, Server)
+- Frameworks and tools:  Pytorch, Snowflackes, Google BigQuery, Jupyter, Tableau, Scikit-Learn, Excel
 
 ### 🛠️ Additional Tools
+- Bash
 - Docker
-- Jupyter
-- Excel, Google Sheets
+- Google Sheets
 - C++
 - PostMan, PostMan API
 - Google API, Google sheets API
