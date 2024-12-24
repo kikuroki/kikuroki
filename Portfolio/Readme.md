@@ -9,17 +9,6 @@ Welcome to my portfolio! Here, I document a summary of my projects in the data f
 
 # 🐍Python Developer (at Coltrans sp. z o.o.)
 
-### Context: 
-During my work, I implemented several pilot projects under NDA with limited deadlines (1-2 weeks for each), aimed at creating prototypes for the company's internal needs. To quickly launch the functionality under strict deadlines and minimal resources, it was decided to use Google API and Google Sheets. This approach allowed colleagues from logistics, with whom I had previously worked as a logistician, to easily master the tool and start using it.
-
-At all stages of the project, I acted independently: debugged, tested, organized feedback with end users and discussed the development plan with the manager. Debugging sometimes took place in real-time, during active product use, ensuring immediate issue resolution and minimal disruption.
-
-For access to APIs from third-party providers such as Timocom, Transporeon and Trans.eu (platforms for loads matching), I also personally negotiated, which contributed to the successful integration of the necessary data into the project.
-
-This portfolio illustrates my comprehensive approach to completing tasks, including planning, technical implementation, user interaction, and working in a fast-paced environment.
-
-
-
 | Project Link | Tools | Libraries | Project Description |
 |---|---|---|---|
 | 📊🚚 Automated Loads Market Analysis  | Python, SQLite, Google Sheets, Googel API, GeoNames API | pandas, numpy, requests, imaplib, smtplib, threading, asyncio | The project allowed the company to analyze loads market offers by integrating data from Transporeon and automating updates on the Timocom platform. In Google Sheets, users could easily select parameters to filter by basic trip data, which provided flexibility in the analysis. Each row in the main sheet represented a separate data set, available for a more detailed view in a separate tab, where the data was updated in real time, and outdated data was marked as irrelevant. In addition, a tab was created with parameters for initial sorting, such as status (e.g. deleted or changed data), so that users could customize the initial data filtering to their needs. |
